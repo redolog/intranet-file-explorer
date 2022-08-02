@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>IntranetFileExplorer</title>
+    <style>
+        #drop_zone {
+            border: 5px solid blue;
+            width: 200px;
+            height: 100px;
+        }
+
+        input[type=file]::-ms-browse {
+            border: 2px solid #6c5ce7;
+            padding: .2em .4em;
+            border-radius: .2em;
+            background-color: #a29bfe;
+        }
+
+        input[type=file]::-webkit-file-upload-button {
+            border: 2px solid #6c5ce7;
+            padding: .2em .4em;
+            border-radius: .2em;
+            background-color: #a29bfe;
+            transition: 1s;
+        }
+
+        input[type=file]::file-selector-button {
+            border: 2px solid #6c5ce7;
+            padding: .2em .4em;
+            border-radius: .2em;
+            background-color: #a29bfe;
+            transition: 1s;
+        }
+
+        input[type=file]::-ms-browse:hover {
+            background-color: #81ecec;
+            border: 2px solid #00cec9;
+        }
+
+        input[type=file]::-webkit-file-upload-button:hover {
+            background-color: #81ecec;
+            border: 2px solid #00cec9;
+        }
+
+        input[type=file]::file-selector-button:hover {
+            background-color: #81ecec;
+            border: 2px solid #00cec9;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="drop_zone" ondrop="dropHandler(event);" ondragover="dragOverHandler(event);">
+    <p>Drag one or more files to this <i>drop zone</i>.</p>
+</div>
+
+<form>
+    <label for="fileUpload">Upload file</label>
+    <input type="file" id="fileUpload" name="fileUpload" multiple>
+</form>
+
+<ul>
+    {% for file in files %}
+    <li>
+        <a href="{{ (request.path + '/' if request.path != '/' else '') + file }}">
+            {{ (request.path + '/' if request.path != '/' else '') + file }}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+
+<script>
+    function dropHandler(ev) {
+        console.log('File(s) dropped')
+        ev.preventDefault()
+
+        const files = []
+        if (ev.dataTransfer.items) {
+            for (let i = 0; i < ev.dataTransfer.items.length; i++) {
+                if (ev.dataTransfer.items[i].kind === 'file') {
+                    const file = ev.dataTransfer.items[i].getAsFile()
+                    files.push(file)
+                }
+            }
+        } else {
+            window.alert("Sorry , we don't support your browser now")
+        }
+        handleFiles(files)
+    }
+
+    function dragOverHandler(ev) {
+        console.log('File(s) in drop zone')
+        ev.preventDefault()
+    }
+
+    const fileUpload = document.getElementById("fileUpload");
+    fileUpload.addEventListener("change", findFiles, false);
+
+    function findFiles() {
+        const fileList = this.files;
+        console.log("find files from fileUpload button")
+        handleFiles(fileList)
+    }
+
+    function handleFiles(files) {
+        console.log("handleFiles start")
+        for (let i = 0, numFiles = files.length; i < numFiles; i++) {
+            handleEachFile(files, i);
+        }
+        console.log("handleFiles end")
+    }
+
+    function handleEachFile(files, i) {
+        var xhr = new XMLHttpRequest()
+        var url = '/upload'
+        console.log(url)
+        xhr.open('POST', url, true)
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest')
+        const file = files[i]
+        console.log(`… each file[${i}].name = ${file.name}`);
+
+        var formData = new FormData()
+        formData.append("file", file)
+        xhr.send(formData);
+
+        xhr.onreadystatechange = function alertContents() {
+            if (xhr.readyState === 4) {
+                if (xhr.status === 200) {
+                    window.location.href = '/upload'
+                } else {
+                    alert('There was a problem with the request');
+                }
+            }
+        }
+    }
+</script>
+</body>
+
+</html>
