@@ -32,6 +32,8 @@ def dir_listing(req_path):
 @app.route("/upload", methods=['POST'])
 def upload():
     file = request.files['file']
+    if not os.path.exists(UPLOAD_DIR):
+        os.makedirs(UPLOAD_DIR)
     file.save(UPLOAD_DIR + file.filename)
     return jsonify({'success': True})
 
